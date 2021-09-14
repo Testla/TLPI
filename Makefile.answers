@@ -6,7 +6,7 @@
 
 DIRS = \
 	lib \
-	04 05 06 07
+	04 05 06 07 08
 
 BUILD_DIRS = ${DIRS}
 

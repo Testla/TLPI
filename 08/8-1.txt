@@ -1,0 +1,3 @@
+Because getpwnam() returns a pointer to a statically allocated structure
+which will be overwritten on each call. Note that the order of arguments
+evaluation is unspecified, so which ID will be printed is indeterminate.
