@@ -8,7 +8,7 @@
 extern char **environ;
 
 static int check_name(const char *name) {
-	return name && name[0] && (name[strcspn(name, "=")] == '\0');
+	return name && name[0] && (strchr(name, '=') == NULL);
 }
 
 int setenv_(const char *name, const char *value, int overwrite) {
