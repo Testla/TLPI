@@ -1,10 +1,10 @@
 include ../Makefile.inc
 
-LINUX_EXE = 12-1 12-2
+LINUX_EXE = 12-1 12-2 12-3
 
 EXE = ${GEN_EXE} ${LINUX_EXE}
 
-all-tests = 12-1.test 12-2.test
+all-tests = 12-1.test 12-2.test 12-3.test
 
 all : allexe test
 
@@ -19,6 +19,9 @@ test : ${all-tests}
 
 12-2.test : 12-2.test.sh 12-2
 	./$< ./12-2 $@
+
+12-3.test : 12-3
+	sudo ./$< /dev/null && touch $@
 
 clean : 
 	${RM} ${EXE} *.o ${all-tests}
