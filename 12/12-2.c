@@ -33,6 +33,8 @@ typedef struct Tree_node {
     struct Tree_node *next_sibling;
 } Tree_node;
 
+void read_process_info(pid_t pid, Process_info **processes, unsigned long *num_processes);
+
 int compare_tree_node_by_pid(const void *a, const void *b);
 
 Tree_node *binary_search(pid_t pid, Tree_node *nodes, int num);
@@ -40,14 +42,29 @@ Tree_node *binary_search(pid_t pid, Tree_node *nodes, int num);
 void print_tree(Tree_node *cur, int depth, Boolean last_sibling[]);
 
 int main(int argc, char *argv[]) {
+    if (!(argc == 1 || argc == 3)) {
+        usageErr("%s [pid_to_read_first delay_after_first_read]\n", argv[0]);
+    }
+
+    pid_t pid_to_read_first = 0;
+    unsigned int delay_after_first_read;
+    if (argc == 3) {
+        pid_to_read_first = getLong(argv[1], GN_GT_0, "pid_to_read_first");
+        delay_after_first_read = getInt(argv[2], GN_NONNEG, "delay_after_first_read");
+    }
+
+    Process_info *processes = NULL;
+    unsigned long num_processes = 0;
+
+    if (pid_to_read_first) {
+        read_process_info(pid_to_read_first, &processes, &num_processes);
+        sleep(delay_after_first_read);
+    }
 
     DIR *dirp = opendir("/proc/");
     if (dirp == NULL) {
         errExit("opendir");
     }
-
-    Process_info *processes = NULL;
-    unsigned long num_processes = 0;
 
     struct dirent *dirent;
     while ((errno = 0, dirent = readdir(dirp)) != NULL) {
@@ -65,85 +82,12 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
-        char status_filename[STATUS_FILENAME_LENGTH];
-        int snprintf_result = snprintf(
-            status_filename, sizeof(status_filename), "/proc/%d/status", pid);
-        if (snprintf_result < 0) {
-            errExit("snprintf");
-        } else if (snprintf_result >= sizeof(status_filename)) {
-            fatal(
-                "stat_filename requires %d bytes but only %d bytes are given",
-                snprintf_result + 1, sizeof(status_filename));
+        if (pid == pid_to_read_first) {
+            // Already read.
+            continue;
         }
 
-        FILE *file = fopen(status_filename, "r");
-        if (file == NULL) {
-            if (errno == ENOENT) {
-                fprintf(stderr, "Skipping pid %ld that does not exist\n", (long)pid);
-                continue;
-            }
-            errExit("fopen");
-        }
-
-        Process_info *new_process = malloc(sizeof(Process_info));
-        if (new_process == NULL) {
-            errExit("malloc");
-        }
-        new_process->pid = pid;
-        new_process->next = processes;
-        processes = new_process;
-        num_processes += 1;
-
-        char line_buffer[LINE_BUFFER_LENGTH];
-        // It would be convenient to use getline(),
-        // but TLPI's Makefile.inc only requires SUSv3
-        // and getline() requires SUSv4.
-        while ((line_buffer[sizeof(line_buffer) - 2] = '\0', 
-                    fgets(line_buffer, sizeof(line_buffer), file))
-                != NULL) {
-            // Use the technique in
-            // https://github.com/michaelforney/samurai/commit/edeec43d638c826d9e446917f97e95151988e0e0
-            // to detect if fgets() has read an incomplete line.
-            if (line_buffer[sizeof(line_buffer) - 2]
-                    && line_buffer[sizeof(line_buffer) - 2] != '\n') {
-                // Skip until the next line.
-                // https://stackoverflow.com/a/16108311
-                fscanf(file, "%*[^\n]\n");
-            }
-
-            char *colon_position = strchr(line_buffer, ':');
-            if (colon_position == NULL) {
-                // Uncomment this line and try commenting out the fscanf call
-                // that skips until the next line
-                // to verify that we do handle long lines correctly.
-                // fprintf(stderr, "Line %s doesn't contain a colon\n", line_buffer);
-                continue;
-            }
-            *colon_position = '\0';
-
-            if (strcmp(line_buffer, COMMAND_NAME_FIELD_NAME) == 0) {
-                char *trailing_newline = strchr(colon_position + 2, '\n');
-                if (trailing_newline != NULL) {
-                    *trailing_newline = '\0';
-                }
-
-                // Do not use scanf family because it may contain whitespace.
-                strncpy(
-                    new_process->command_name,
-                    colon_position + 2,
-                    sizeof(new_process->command_name));
-            } else if (strcmp(line_buffer, PPID_FIELD_NAME) == 0) {
-                errno = 0;
-                new_process->ppid = strtol(colon_position + 2, NULL, 10);
-                if (errno) {
-                    errExit("strtol");
-                }
-            }
-        }
-
-        if (fclose(file) == EOF) {
-            errExit("fclose");
-        }
+        read_process_info(pid, &processes, &num_processes);
     }
     if (errno) {
         errExit("readdir");
@@ -202,6 +146,88 @@ int main(int argc, char *argv[]) {
         old = p;
         p = p->next;
         free(old);
+    }
+}
+
+void read_process_info(pid_t pid, Process_info **processes, unsigned long *num_processes) {
+    char status_filename[STATUS_FILENAME_LENGTH];
+    int snprintf_result = snprintf(
+        status_filename, sizeof(status_filename), "/proc/%d/status", pid);
+    if (snprintf_result < 0) {
+        errExit("snprintf");
+    } else if (snprintf_result >= sizeof(status_filename)) {
+        fatal(
+            "stat_filename requires %d bytes but only %d bytes are given",
+            snprintf_result + 1, sizeof(status_filename));
+    }
+
+    FILE *file = fopen(status_filename, "r");
+    if (file == NULL) {
+        if (errno == ENOENT) {
+            fprintf(stderr, "Skipping pid %ld that does not exist\n", (long)pid);
+            return;
+        }
+        errExit("fopen");
+    }
+
+    Process_info *new_process = malloc(sizeof(Process_info));
+    if (new_process == NULL) {
+        errExit("malloc");
+    }
+    new_process->pid = pid;
+    new_process->next = *processes;
+    *processes = new_process;
+    *num_processes += 1;
+
+    char line_buffer[LINE_BUFFER_LENGTH];
+    // It would be convenient to use getline(),
+    // but TLPI's Makefile.inc only requires SUSv3
+    // and getline() requires SUSv4.
+    while ((line_buffer[sizeof(line_buffer) - 2] = '\0', 
+                fgets(line_buffer, sizeof(line_buffer), file))
+            != NULL) {
+        // Use the technique in
+        // https://github.com/michaelforney/samurai/commit/edeec43d638c826d9e446917f97e95151988e0e0
+        // to detect if fgets() has read an incomplete line.
+        if (line_buffer[sizeof(line_buffer) - 2]
+                && line_buffer[sizeof(line_buffer) - 2] != '\n') {
+            // Skip until the next line.
+            // https://stackoverflow.com/a/16108311
+            fscanf(file, "%*[^\n]\n");
+        }
+
+        char *colon_position = strchr(line_buffer, ':');
+        if (colon_position == NULL) {
+            // Uncomment this line and try commenting out the fscanf call
+            // that skips until the next line
+            // to verify that we do handle long lines correctly.
+            // fprintf(stderr, "Line %s doesn't contain a colon\n", line_buffer);
+            continue;
+        }
+        *colon_position = '\0';
+
+        if (strcmp(line_buffer, COMMAND_NAME_FIELD_NAME) == 0) {
+            char *trailing_newline = strchr(colon_position + 2, '\n');
+            if (trailing_newline != NULL) {
+                *trailing_newline = '\0';
+            }
+
+            // Do not use scanf family because it may contain whitespace.
+            strncpy(
+                new_process->command_name,
+                colon_position + 2,
+                sizeof(new_process->command_name));
+        } else if (strcmp(line_buffer, PPID_FIELD_NAME) == 0) {
+            errno = 0;
+            new_process->ppid = strtol(colon_position + 2, NULL, 10);
+            if (errno) {
+                errExit("strtol");
+            }
+        }
+    }
+
+    if (fclose(file) == EOF) {
+        errExit("fclose");
     }
 }
 

@@ -17,10 +17,8 @@ test : ${all-tests}
 12-1.test : 12-1
 	sleep 1 & ./$< $${USER} && ./$< $${USER} $$! 2 && touch $@
 
-12-2.test : 12-2
-# It would be hard to test the case that a process's parent disappears.
-# Because when that happens, the PPid in /proc/PID/status will be set to 1.
-	./$< && touch $@
+12-2.test : 12-2.test.sh 12-2
+	./$< ./12-2 $@
 
 clean : 
 	${RM} ${EXE} *.o ${all-tests}
