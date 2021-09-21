@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 
         char status_filename[STATUS_FILENAME_LENGTH];
         int snprintf_result = snprintf(
-            status_filename, sizeof(status_filename), "/proc/%d/status", pid);
+            status_filename, sizeof(status_filename), "/proc/%ld/status", (long)pid);
         if (snprintf_result < 0) {
             errExit("snprintf");
         } else if (snprintf_result >= sizeof(status_filename)) {
