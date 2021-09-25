@@ -1,0 +1,22 @@
+Tests are done with wslfs on WSL 1.
+Using a 1 MiB file filled with zero.
+File system is not remounted and only one run for each test.
+
+a)
+BUF_SIZE=1
+real    0m25.354s
+user    0m0.078s
+sys     0m25.031s
+
+Default(BUF_SIZE=1024)
+real    0m0.053s
+user    0m0.000s
+sys     0m0.047s
+
+BUF_SIZE=4096
+real    0m0.025s
+user    0m0.000s
+sys     0m0.016s
+
+b)
+Close to the tests without O_SYNC and I don't know why.

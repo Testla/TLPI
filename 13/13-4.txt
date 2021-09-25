@@ -1,0 +1,8 @@
+If standard output is redirected to a terminal, stdio library employs
+line-buffered IO by default. Because end of the string printed by printf is a
+newline, stdio will call write() to immediately flush its buffer to kernel
+buffer, guaranteeing that the first string goes before the second.
+
+If standard output is redirected to a file, stdio library employs full-buffered
+IO by default. Most of the time, the short string printed by printf will not
+cause the stdio buffer to be flushed and thus will go after the second.

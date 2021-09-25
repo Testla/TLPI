@@ -1,0 +1,3 @@
+fflush causes data in stdio buffer to be written to kernel buffer.
+fsync causes data and metadata in kernel buffer to be transfered to disk.
+Thw two calls combined flushes both buffers to disk.

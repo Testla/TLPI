@@ -1,0 +1,57 @@
+Tests are done with wslfs on WSL 1.
+Using 1 MiB as file size.
+
+Default
+
+buffer size = 1
+
+real    0m19.041s
+user    0m0.047s
+sys     0m18.844s
+
+buffer size = 512
+
+real    0m0.066s
+user    0m0.000s
+sys     0m0.047s
+
+USE_O_SYNC
+
+buffer size = 1
+
+real    0m19.330s
+user    0m0.078s
+sys     0m19.172s
+
+buffer size = 512
+
+real    0m0.069s
+user    0m0.000s
+sys     0m0.047s
+
+USE_FSYNC
+
+buffer size = 1
+
+real    46m14.871s
+user    0m1.953s
+sys     4m0.250s
+
+buffer size = 512
+real    0m4.765s
+user    0m0.000s
+sys     0m0.109s
+
+USE_FDATASYNC
+
+buffer size = 1
+
+real    2m11.504s
+user    0m0.141s
+sys     0m41.813s
+
+buffer size = 512
+
+real    0m0.270s
+user    0m0.000s
+sys     0m0.141s
