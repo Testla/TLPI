@@ -1,0 +1,19 @@
+I switched from WSL 1 to WSL 2 using the export-and-import trick.
+
+$ mount
+/dev/sdb on / type ext4 (rw,relatime,discard,errors=remount-ro,data=ordered)
+
+bash -c "time ./14-1 1000000 . && time ./14-1 1000000 . x && touch 14-1.test"
+
+real    7m41.593s
+user    0m5.851s
+sys     7m12.870s
+
+real    7m14.528s
+user    0m6.160s
+sys     6m36.719s
+
+During the run, the program eats up all of my free memory(more than 4 GiB).
+
+Although the first run required the .vhdx virtual hard disk to expand,
+subsequent runs take roughly the same time.
