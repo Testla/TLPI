@@ -8,7 +8,7 @@ GEN_EXE =
 
 EXE = ${GEN_EXE} ${LINUX_EXE}
 
-all-tests = ${15_1_tests}
+all-tests = ${15_1_tests} 15-2.test
 
 all : allexe test
 
@@ -25,6 +25,9 @@ test : ${all-tests}
 	./$< && touch $@
 
 15-1.test.c : 15-1.test.c.py
+	./$< && touch $@
+
+15-2.test : 15-2.test.sh
 	./$< && touch $@
 
 clean : 

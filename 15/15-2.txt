@@ -1,0 +1,2 @@
+No. Because stat() only reads information from the file's i-node, it does not
+update the i-node, and does not read or write the file.
