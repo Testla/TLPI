@@ -1,0 +1,4 @@
+Just call umask() a second time to reset to the old umask.
+
+mode_t old_umask = umask(0);
+umask(old_umask);
