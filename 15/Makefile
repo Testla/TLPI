@@ -4,13 +4,13 @@ include ../Makefile.inc
 
 15_1_tests = $(patsubst %,15-1.test.%,${15_1_test_bullets})
 
-GEN_EXE = 15-4.main
+GEN_EXE = 15-4.main 15-6
 
 LINUX_EXE = 15-3
 
 EXE = ${GEN_EXE} ${LINUX_EXE}
 
-all-tests = ${15_1_tests} 15-2.test 15-3.test 15-4.test
+all-tests = ${15_1_tests} 15-2.test 15-3.test 15-4.test 15-6.test
 
 all : allexe test
 
@@ -39,6 +39,9 @@ test : ${all-tests}
 
 15-4.test : 15-4.test.sh 15-4.main
 	./$< ./15-4.main && touch $@
+
+15-6.test : 15-6.test.sh 15-6
+	./$< ./15-6 && touch $@
 
 clean : 
 	${RM} ${EXE} *.o ${all-tests}
