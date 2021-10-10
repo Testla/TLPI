@@ -6,11 +6,11 @@ include ../Makefile.inc
 
 GEN_EXE = 15-4.main 15-6
 
-LINUX_EXE = 15-3
+LINUX_EXE = 15-3 15-7
 
 EXE = ${GEN_EXE} ${LINUX_EXE}
 
-all-tests = ${15_1_tests} 15-2.test 15-3.test 15-4.test 15-6.test
+all-tests = ${15_1_tests} 15-2.test 15-3.test 15-4.test 15-6.test 15-7.test
 
 all : allexe test
 
@@ -42,6 +42,9 @@ test : ${all-tests}
 
 15-6.test : 15-6.test.sh 15-6
 	./$< ./15-6 && touch $@
+
+15-7.test : 15-7.test.sh 15-7
+	./$< ./15-7 && touch $@
 
 clean : 
 	${RM} ${EXE} *.o ${all-tests}
